@@ -1,0 +1,18 @@
+spring:
+  application:
+    name:Campus Event
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/CEM
+    driver-class-name: org.postgresql.Driver
+    username: shrey
+    password: shrey
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+jwt:
+  secret: VjQxY2tUeWhXbHBLdDhQNk5rQW9wS3JpZ0ZKdE5qWm1k
+  expiration: 86400000  # 1 day in milliseconds
+
