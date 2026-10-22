@@ -33,7 +33,7 @@ public class EventController {
 
     @GetMapping("/getappr")
     public @ResponseBody List<Event> getApproved() {
-        return eventService.getEvents();
+        return (List<Event>) eventService.getEvents();
     }
 
 

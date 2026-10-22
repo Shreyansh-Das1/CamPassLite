@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface EventRepo extends JpaRepository<Event,Long> {
     List<Event> findAll();
-
+    List<Event> findAllByEventStatus(EventStatus status);
     @Modifying
     @Query("""
         UPDATE Event e

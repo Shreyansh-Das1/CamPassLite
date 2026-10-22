@@ -11,7 +11,7 @@ public class EventService {
     @Autowired
     private EventRepo eventrepo;
 
-
+    public Iterable<Event> getEvents(){ return eventrepo.findAllByEventStatus(EventStatus.APPROVED);   }
     public EventResDTO createEvent(EventReqDTO erqdto){
 
         Event newEv = mapFroDTO(erqdto);

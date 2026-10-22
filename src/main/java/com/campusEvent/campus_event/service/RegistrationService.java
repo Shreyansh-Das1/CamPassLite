@@ -49,8 +49,8 @@ public class RegistrationService {
 
 
     public List<Registration> fetchRegistered(){
-        Optional<User> user = userrepo.findByUsername(getAuthentication().getName());
-        return regisRepo.findByUser(user.orElse(null));
+        User user = userrepo.findByEmail(getAuthentication().getName());
+        return regisRepo.findByUser(user);
 
     }
 
