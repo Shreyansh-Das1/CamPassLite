@@ -1,184 +1,211 @@
-# CamPass
+# CamPassLite
 
-> Full-stack university event management & ticketing platform
+A lightweight **Campus Event Management System** built with Spring Boot and PostgreSQL. CamPassLite simplifies campus event management by providing a REST API for creating, viewing, and managing events, with authentication and role-based access control.
 
-A scalable backend built with Spring Boot 3, PostgreSQL, and JWT authentication. Supports the full lifecycle of campus events — from club creation and event approval to seat booking, QR-code ticket generation, and attendee check-in.
-
----
+The project is a simplified version of the original CamPass system, focused on core backend functionality and a manageable full-stack implementation.
 
 ## Features
 
-* **JWT Authentication** — stateless login/register flow with BCrypt password hashing
-* **Role-Based Access Control** — three roles (Student, Organizer, Admin) enforced via `@PreAuthorize` and Spring SecurityContext
-* **Event Approval Workflow** — organizers create events (PENDING), admins approve/reject (APPROVED/REJECTED)
-* **Atomic Seat Booking** — conditional JPQL `UPDATE` increments `booked` only when `booked < capacity`, preventing race conditions without optimistic lock storms
-* **QR-Code Ticketing** — ZXing generates a scannable QR code per registration; organizers scan to check attendees in
-* **Club Membership Enforcement** — check-in authorization validated against club membership, not just role
-* **Cancellation Flow** — students can cancel registrations; seat count decremented atomically
+- **Event Management:** Create and view campus events.
+- **Authentication:** User registration and login using JWT-based authentication.
+- **Role-Based Access Control:** Separate permissions for students, organizers, and administrators.
+- **Event Registration:** Allow students to register for events and manage their registrations.
+- **Registration Management:** View registered events and cancel registrations.
+- **RESTful API:** Structured HTTP endpoints for frontend integration.
+- **PostgreSQL Database:** Persistent storage for users, events, and registrations.
 
----
+> **Project scope:** CamPassLite prioritizes essential campus event management functionality. Advanced features such as QR-based ticketing and check-in are outside the current scope.
 
 ## Tech Stack
 
-| Layer | Technology |
-| --- | --- |
-| Runtime | Java 17 |
-| Framework | Spring Boot 3.x |
-| Security | Spring Security + JJWT |
-| Persistence | Spring Data JPA + Hibernate |
-| Database | PostgreSQL |
-| Containerization | Docker / Docker Compose |
-| QR Codes | ZXing (Google) |
-| Build | Gradle |
-| Planned Frontend | React |
+### Backend
+- Java 17
+- Spring Boot
+- Spring Web MVC
+- Spring Data JPA
+- Spring Security
+- JWT authentication
+- BCrypt password hashing
+- Gradle
 
----
+### Database
+- PostgreSQL
+
+### Frontend
+- React and Vite *(planned)*
+
+### Development Tools
+- Git and GitHub
+- Docker Compose *(optional for local database setup)*
 
 ## Architecture
 
+The backend follows a layered architecture:
+
+```text
+Client / Frontend
+       |
+       v
+ REST Controllers
+       |
+       v
+   Services
+       |
+       v
+ Repositories
+       |
+       v
+   PostgreSQL
 ```
-Controller → Service → Repository → Entity
 
-```
-
-* **Controllers** — thin, handle HTTP mapping and `@PreAuthorize` guards
-* **Services** — all business logic; SecurityContext access isolated to per-method calls (never field-level)
-* **Repositories** — Spring Data JPA with custom `@Query` for atomic operations
-* **DTOs** — strict request/response separation; entities never exposed directly
-
----
-
-## API Overview
-
-### Auth — `/api/auth`
-
-| Method | Endpoint | Role | Description |
-| --- | --- | --- | --- |
-| POST | `/register` | Public | Register new student account |
-| POST | `/login` | Public | Returns JWT token |
-
-### Events — `/api/event`
-
-| Method | Endpoint | Role | Description |
-| --- | --- | --- | --- |
-| POST | `/create` | ORGANIZER | Create event (status: PENDING) |
-| PUT | `/{id}/approval` | ADMIN | Approve or reject event |
-| GET | `/getappr` | Any authenticated | Get events filtered by role |
-| GET | `?clubID=` | Any authenticated | Get all events for a club |
-| GET | `/{eventId}/fetchticket` | STUDENT | Download QR ticket as PNG |
-
-### Registrations — `/api/registration`
-
-| Method | Endpoint | Role | Description |
-| --- | --- | --- | --- |
-| PUT | `/reserve` | STUDENT | Book a seat |
-| PUT | `/{ticketid}/checkin` | ORGANIZER | Mark attendee present |
-| GET | `/registered` | STUDENT | List my registrations |
-| DELETE | `/cancel` | STUDENT | Cancel a registration |
-
-### Clubs — `/api/club`
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | `/createclub` | Create a new club |
-| GET | `/get?clubID=` | Fetch club details |
-
----
-
-## Database Schema (key design decisions)
-
-* `Registration` has a composite unique constraint on `(User_ID, Event_ID)` — prevents duplicate bookings at DB level
-* `Event` uses `@Version` for optimistic locking
-* `Registration_ID` and `User_ID + Event_ID` are both indexed for fast lookups
-* `Membership` composite key enforces club membership integrity
-
----
+- **Controllers:** Handle HTTP requests and responses.
+- **Services:** Contain application logic and coordinate operations.
+- **Repositories:** Access and manage database entities through Spring Data JPA.
+- **DTOs:** Transfer request and response data between the API and client.
+- **Security:** Protects endpoints using JWT authentication and role-based authorization.
 
 ## Getting Started
 
 ### Prerequisites
 
-* **Docker** and **Docker Compose**
-* Java 17+ (Optional, only needed for local development outside containers)
-* Gradle (Optional, wrapped via `./gradlew`)
+Make sure you have the following installed:
 
-### Configuration
+- Java 17 or compatible JDK
+- PostgreSQL
+- Git
+- An IDE such as IntelliJ IDEA or VS Code
 
-Environment variables are managed within `docker-compose.yml`. You can spin up the entire setup using the default values, or override them in a local `.env` file:
+Docker is optional if you prefer running PostgreSQL in a container.
 
-```env
-DB_URL=jdbc:postgresql://db:5432/CEM
-DB_USERNAME=postgres
-DB_PASSWORD=your_secure_password
-JWT_SECRET=your_base64_secret_min_32_chars
-JWT_EXPIRATION=86400000
-
-```
-
-> **Note:** Spring Boot automatically picks up these environment variables to override the internal configuration mappings.
-
-### Run
-
-#### Option 1: Full Containerized Setup (Recommended)
-
-To build and spin up both the Spring Boot backend and the PostgreSQL database container seamlessly:
+### 1. Clone the Repository
 
 ```bash
-docker compose up --build
-
+git clone https://github.com/Shreyansh-Das1/CamPassLite.git
+cd CamPassLite
 ```
 
-#### Option 2: Hybrid Setup (Database in Docker, App Local)
+### 2. Configure PostgreSQL
 
-If you prefer running the application locally using Gradle while keeping the database containerized:
+Create a PostgreSQL database named `CEM` and configure your database credentials in:
 
-1. Start only the database service:
-```bash
-docker compose up -d db
+`src/main/resources/application.yml`
 
+Example configuration:
+
+```yaml
+spring:
+  application:
+    name: CamPassLite
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/CEM
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000
 ```
 
+Set `DB_USERNAME`, `DB_PASSWORD`, and `JWT_SECRET` in your environment before starting the application.
 
-2. Run the application:
+**Note:** Use a sufficiently long, randomly generated JWT secret. Keep credentials and secrets out of version control. The `update` setting is intended for development; production deployments should use a controlled database migration strategy.
+
+### 3. Run the Backend
+
+On Windows:
+
+```powershell
+.\gradlew.bat bootRun
+```
+
+On Linux or macOS:
+
 ```bash
 ./gradlew bootRun
-
 ```
 
+Once started, the backend will be available at:
 
+```text
+http://localhost:8080
+```
 
-Hibernate will auto-create/update tables on first run (`ddl-auto: update`).
+### 4. Run the Database with Docker (Optional)
 
----
+If you use the provided Docker Compose configuration, start the database with:
 
-## Security Notes
+```bash
+docker compose up -d postgres
+```
 
-* All non-auth endpoints require a valid JWT: `Authorization: Bearer <token>`
-* Roles are read exclusively from the SecurityContext — never from client input
-* `/api/auth/` and Swagger UI are the only public routes
+Check `docker-compose.yml` for the configured database name, credentials, and port. Ensure they match your application configuration.
 
----
+## API Overview
 
-## Planned
+The backend exposes REST endpoints under `/api`.
 
-* React frontend (student dashboard, organizer panel, admin console)
-* Email notifications on approval/rejection
-* Pagination on event listing endpoints
-* Integration test suite (JUnit 5 + H2)
+| Module | Purpose |
+|---|---|
+| Authentication | Register users and log in |
+| Events | Create and retrieve campus events |
+| Event Registration | Register for events and view registrations |
+| Registration Cancellation | Cancel an existing registration |
 
----
+The exact endpoints and required permissions are defined in the controller classes.
+
+Authenticated endpoints require a valid JWT. Access to protected operations depends on the user's role.
+
+## User Roles
+
+| Role | Responsibility |
+|---|---|
+| `STUDENT` | Browse events and manage event registrations |
+| `ORGANIZER` | Create and manage events |
+| `ADMIN` | Perform administrative operations, including event approval where enabled |
+
+The precise permissions depend on the security rules implemented by the backend.
 
 ## Project Structure
 
+```text
+CamPassLite/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/campusevent/
+│   │   │       ├── controller/
+│   │   │       ├── service/
+│   │   │       ├── repository/
+│   │   │       ├── entity/
+│   │   │       ├── dto/
+│   │   │       └── security/
+│   │   └── resources/
+│   │       └── application.yml
+│   └── test/
+├── build.gradle
+├── settings.gradle
+├── docker-compose.yml
+└── README.md
 ```
-src/main/java/com/campusEvent/campus_event/
-├── controller/         # AuthController, EventController, RegistrationController, ClubController
-├── service/            # Business logic + JWT utilities
-│   └── jwt/            # JwtService, AuthFilter, JwtProperties
-├── entity/             # User, Event, Club + enums
-├── relations/          # Registration, Membership (join tables)
-├── repository/         # Spring Data JPA interfaces
-├── dto/                # Request/response DTOs
-└── security/           # SecurityConfig
 
-```
+*Directory names may vary slightly depending on the current implementation.*
+
+## Development Status
+
+CamPassLite is an ongoing learning project.
+
+Current priorities:
+- Stabilize backend authentication and event operations.
+- Complete the core event CRUD workflow.
+- Verify event registration and cancellation.
+- Build a React frontend and integrate it with the REST API.
+
+## License
+
+No license has been specified yet. Unless a license is added to the repository, all rights remain with the copyright holder.
