@@ -4,14 +4,8 @@ import com.campusEvent.campus_event.dto.Event.*;
 import com.campusEvent.campus_event.entity.Event;
 import com.campusEvent.campus_event.entity.enums.EventStatus;
 import com.campusEvent.campus_event.repository.EventRepo;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
-
 @Service
 public class EventService {
     @Autowired

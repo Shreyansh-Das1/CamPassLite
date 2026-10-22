@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Transactional
 @Service
@@ -24,12 +25,12 @@ public class RegistrationService {
     private EventRepo eventrepo;
     @Autowired
     private RegisRepo regisRepo;
-
+    @Autowired  private UserRepo userrepo;
 
 
     public ResObj cancel(Long eventId){
         User user = (User) getAuthentication().getPrincipal();
-        if(!regisRepo.existsByUser(user.getId(), eventId))
+        if(!regisRepo.existsByUser_IdAndEvent_Eventid(user.getId(), eventId))
             return new ResObj(false,"Registration does not exist");
 
         Registration regist = regisRepo.findByUser_IdAndEvent_Eventid(user.getId(), eventId).orElse(null);
@@ -48,8 +49,8 @@ public class RegistrationService {
 
 
     public List<Registration> fetchRegistered(){
-        User user = (User) getAuthentication().getPrincipal();
-        return regisRepo.findByUser(user);
+        Optional<User> user = userrepo.findByUsername(getAuthentication().getName());
+        return regisRepo.findByUser(user.orElse(null));
 
     }
 
@@ -68,7 +69,7 @@ public class RegistrationService {
         if(!role.equals("ROLE_STUDENT"))
             throw new IllegalAccessException(role+" not allowed");
 
-        if( regisRepo.existsByUser(userId, eventId))
+        if( regisRepo.existsByUser_IdAndEvent_Eventid(userId, eventId))
             throw new IllegalStateException("User already registered");
 
         Event e =  eventrepo.findById(eventId).get();

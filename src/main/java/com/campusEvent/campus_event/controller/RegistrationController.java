@@ -24,11 +24,6 @@ public class RegistrationController {
         return registrationService.reserveSeat(eventId);
     }
 
-    @PutMapping("/{ticketid}/checkin")
-    @PreAuthorize("hasRole('ORGANIZER')")
-    public ResObj checkin(@PathVariable Long ticketid){
-        return registrationService.checkin(ticketid);
-    }
 
     @GetMapping("/registered")
     @PreAuthorize("hasRole('STUDENT')")
