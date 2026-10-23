@@ -32,7 +32,10 @@ The project is a simplified version of the original CamPass system, focused on c
 - PostgreSQL
 
 ### Frontend
-- React and Vite *(planned)*
+- React 19
+- Vite
+- Tailwind CSS
+- React Router
 
 ### Development Tools
 - Git and GitHub
@@ -88,7 +91,7 @@ cd CamPassLite
 
 Create a PostgreSQL database named `CEM` and configure your database credentials in:
 
-`src/main/resources/application.yml`
+`backend/src/main/resources/application.yml`
 
 Example configuration:
 
@@ -118,6 +121,12 @@ Set `DB_USERNAME`, `DB_PASSWORD`, and `JWT_SECRET` in your environment before st
 
 ### 3. Run the Backend
 
+From the repository root, change into the backend directory first:
+
+```bash
+cd backend
+```
+
 On Windows:
 
 ```powershell
@@ -136,30 +145,63 @@ Once started, the backend will be available at:
 http://localhost:8080
 ```
 
-### 4. Run the Database with Docker (Optional)
+### 4. Run the Frontend
 
-If you use the provided Docker Compose configuration, start the database with:
+The React + Tailwind frontend lives in the `frontend/` directory. It proxies `/api` requests to `http://localhost:8080`.
 
 ```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser. To build for production:
+
+```bash
+npm run build
+```
+
+### 5. Run the Database with Docker (Optional)
+
+If you use the provided Docker Compose configuration (located in `backend/`), start the database with:
+
+```bash
+cd backend
 docker compose up -d postgres
 ```
 
 Check `docker-compose.yml` for the configured database name, credentials, and port. Ensure they match your application configuration.
 
+### 6. Creating Organizer and Admin Accounts
+
+New accounts registered through the UI are always `STUDENT`. To try the organizer or admin experience, register an account in the app and then promote it directly in PostgreSQL:
+
+```bash
+docker exec campass-db psql -U shrey -d CEM -c "UPDATE users SET role='ORGANIZER' WHERE email='organizer@campus.edu';"
+docker exec campass-db psql -U shrey -d CEM -c "UPDATE users SET role='ADMIN' WHERE email='admin@campus.edu';"
+```
+
+Log out and log back in afterwards so the frontend reloads the new role.
+
+> The default `application.yml` uses `ddl-auto: create`, so the schema (and all data) is recreated every time the backend restarts.
+
 ## API Overview
 
 The backend exposes REST endpoints under `/api`.
 
-| Module | Purpose |
-|---|---|
-| Authentication | Register users and log in |
-| Events | Create and retrieve campus events |
-| Event Registration | Register for events and view registrations |
-| Registration Cancellation | Cancel an existing registration |
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Public | Register a new student account |
+| `POST` | `/api/auth/login` | Public | Log in and receive a JWT |
+| `GET` | `/api/auth/me` | Authenticated | Get the current user's profile and role |
+| `GET` | `/api/event/getappr` | Authenticated | List approved events |
+| `POST` | `/api/event/create` | `ORGANIZER` | Create an event |
+| `PUT` | `/api/event/{id}/approval` | `ADMIN` | Approve or cancel an event |
+| `PUT` | `/api/registration/reserve` | `STUDENT` | Reserve a seat (body: numeric event id) |
+| `GET` | `/api/registration/registered` | `STUDENT` | List the current user's registrations |
+| `DELETE` | `/api/registration/cancel` | `STUDENT` | Cancel a registration (body: numeric event id) |
 
-The exact endpoints and required permissions are defined in the controller classes.
-
-Authenticated endpoints require a valid JWT. Access to protected operations depends on the user's role.
+Authenticated endpoints require a valid JWT in the `Authorization: Bearer <token>` header.
 
 ## User Roles
 
@@ -175,36 +217,62 @@ The precise permissions depend on the security rules implemented by the backend.
 
 ```text
 CamPassLite/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/campusevent/
-│   │   │       ├── controller/
-│   │   │       ├── service/
-│   │   │       ├── repository/
-│   │   │       ├── entity/
-│   │   │       ├── dto/
-│   │   │       └── security/
-│   │   └── resources/
-│   │       └── application.yml
-│   └── test/
-├── build.gradle
-├── settings.gradle
-├── docker-compose.yml
+├── backend/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/
+│   │   │   │   └── com/campusEvent/campus_event/
+│   │   │   │       ├── controller/
+│   │   │   │       ├── dto/
+│   │   │   │       ├── entity/
+│   │   │   │       ├── relations/
+│   │   │   │       ├── repository/
+│   │   │   │       ├── security/
+│   │   │   │       └── service/
+│   │   │   └── resources/
+│   │   │       └── application.yml
+│   │   └── test/
+│   ├── build.gradle
+│   ├── settings.gradle
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── gradle/
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── HELP.md
+│   └── ER Diagram.png
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── utils/
+│   ├── index.html
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── .gitignore
 └── README.md
 ```
-
-*Directory names may vary slightly depending on the current implementation.*
 
 ## Development Status
 
 CamPassLite is an ongoing learning project.
 
-Current priorities:
-- Stabilize backend authentication and event operations.
-- Complete the core event CRUD workflow.
-- Verify event registration and cancellation.
-- Build a React frontend and integrate it with the REST API.
+Completed:
+- JWT authentication with role-based access control.
+- Event creation, approval and cancellation.
+- Event registration and cancellation.
+- React + Tailwind frontend covering student, organizer and admin workflows.
+
+Next steps:
+- Add a "my events" endpoint for organizers (currently tracked client-side).
+- Add pending-event listing and an approval queue for admins.
+- Replace `ddl-auto: create` with migrations for persistent data.
 
 ## License
 
