@@ -16,7 +16,7 @@ frontend/*.log
 # Environment and secrets
 .env
 .env.*
-
+testing\node_modules
 # OS and editor files
 .DS_Store
 Thumbs.db
