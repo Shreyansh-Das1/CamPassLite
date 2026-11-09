@@ -1,0 +1,12 @@
+{
+  "name": "campass-api-testing",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "newman run CamPassLite.postman_collection.json -e CamPassLite.postman_environment.json",
+    "report": "newman run CamPassLite.postman_collection.json -e CamPassLite.postman_environment.json -r cli,htmlextra --reporter-htmlextra-export reports/campass-report.html"
+  },
+  "devDependencies": {
+    "newman": "^6.2.1",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
