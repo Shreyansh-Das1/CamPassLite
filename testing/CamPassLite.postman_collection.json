@@ -1,0 +1,590 @@
+{
+  "info": {
+    "_postman_id": "83dd9931-9cbf-4fe6-bc1b-c92abfdd9c28",
+    "name": "CamPassLite API Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "31377601"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "StudentRegister",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Student registration endpoint responds successfully\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"Registration response is not empty\", function () {",
+                  "    pm.expect(pm.response.text().length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Test Student\",\r\n    \"email\": \"{{studentEmail}}\",\r\n    \"password\": \"{{studentPassword}}\",\r\n    \"number\": \"9876543210\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/auth/register",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "StudentLogin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Student login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200 && pm.response.text().trim().length > 20) {",
+                  "    pm.environment.set(\"studentToken\", pm.response.text().trim());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"{{studentEmail}}\",\r\n    \"password\": \"{{studentPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/auth/login",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OrgLogin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Organizer login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200 && pm.response.text().trim().length > 20) {",
+                  "    pm.environment.set(\"organizerToken\", pm.response.text().trim());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"{{organizerEmail}}\",\r\n    \"password\": \"{{organizerPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/auth/login",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "StudentProfile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Profile request successful\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const profile = pm.response.json();",
+                  "  pm.test(\"Profile email matches student\", function () { pm.expect(profile.email).to.eql(pm.environment.get(\"studentEmail\")); });",
+                  "  pm.test(\"Profile role is STUDENT\", function () { pm.expect(profile.role).to.eql(\"STUDENT\"); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/api/auth/me",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Event Management",
+      "item": [
+        {
+          "name": "CreateEvent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Event creation successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const eventData = pm.response.json();",
+                  "    pm.test(\"Event title is correct\", function () {",
+                  "        pm.expect(eventData.title).to.eql(\"TechFest 2026\");",
+                  "    });",
+                  "    pm.test(\"Event ID is present\", function () {",
+                  "        pm.expect(eventData.Eventid).to.be.a(\"number\");",
+                  "    });",
+                  "    if (typeof eventData.Eventid === \"number\") {",
+                  "        pm.environment.set(\"eventId\", String(eventData.Eventid));",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{organizerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"TechFest 2026\",\r\n    \"description\": \"Annual technical festival\",\r\n    \"venue\": \"DIT University\",\r\n    \"capacity\": 100,\r\n    \"date\": \"2026-12-15T00:00:00\",\r\n    \"startTime\": \"09:00:00\",\r\n    \"endTime\": \"17:00:00\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/event/create",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "event",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getEvents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Approved events retrieved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Events response is an array\", function () {",
+                  "        pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/event/getappr",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "event",
+                "getappr"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Event Registration",
+      "item": [
+        {
+          "name": "register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Event reservation successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200 && pm.response.text().trim().length > 0) {",
+                  "    pm.test(\"Reservation response is valid JSON\", function () {",
+                  "        pm.expect(function () { return pm.response.json(); }).to.not.throw();",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{eventId}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/registration/reserve",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "registration",
+                "reserve"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DelReg",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registration cancellation successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{eventId}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/registration/cancel",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "registration",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Security Testing",
+      "item": [
+        {
+          "name": "Student CreateEvent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Student cannot create an event\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"TechFest 2026\",\r\n    \"description\": \"Annual technical festival\",\r\n    \"venue\": \"DIT University\",\r\n    \"capacity\": 100,\r\n    \"date\": \"2026-12-15T00:00:00\",\r\n    \"startTime\": \"09:00:00\",\r\n    \"endTime\": \"17:00:00\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/event/create",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "event",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "incorrPassword",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/auth/login",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{studentEmail}}\",\n    \"password\": \"DefinitelyWrongPassword!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Invalid credentials are rejected\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Response time is under 1000ms\", function () { pm.expect(pm.response.responseTime).to.be.below(1000); });"
+        ]
+      }
+    }
+  ]
+}
